@@ -1,27 +1,24 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&italic&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+html,
+body,
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  height: 100%;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+.bg-gradient-red-orange {
+  background-image: linear-gradient(to right, red, orange);
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+.hover\:bg-gradient-red-orange:hover {
+  background-image: linear-gradient(to right, darkred, darkorange);
+}
+
+.focus-visible\:bg-gradient-red-orange:focus-visible {
+  outline: 2px solid orange;
+  outline-offset: 2px;
 }
