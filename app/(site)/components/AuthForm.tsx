@@ -1,24 +1,20 @@
 "use client";
 
+import React, { useCallback, useState } from "react";
 import Button from "@/app/components/Button";
 import Input from "@/app/components/inputs/Input";
-import { useCallback, useState } from "react";
 import { useForm, SubmitHandler, FieldValues } from "react-hook-form";
 import AuthSocialButton from "./AuthSocialButton";
-import { BsGithub } from "react-icons/bs";
-import { BsGoogle } from "react-icons/bs";
+import { BsGithub, BsGoogle } from "react-icons/bs";
+import axios from "axios";
 
 type Variant = "LOGIN" | "REGISTER";
 
-const AuthForm = () => {
+const AuthForm: React.FC = () => {
   const [variant, setVariant] = useState<Variant>("LOGIN");
   const [isLoading, setIsLoading] = useState(false);
   const toggleVariant = useCallback(() => {
-    if (variant === "LOGIN") {
-      setVariant("REGISTER");
-    } else {
-      setVariant("LOGIN");
-    }
+    setVariant(variant === "LOGIN" ? "REGISTER" : "LOGIN");
   }, [variant]);
 
   const {
@@ -33,20 +29,26 @@ const AuthForm = () => {
     },
   });
 
-  const onSubmit: SubmitHandler<FieldValues> = (data) => {
+  const onSubmit: SubmitHandler<FieldValues> = async (data) => {
     setIsLoading(true);
-
-    if (variant === "REGISTER") {
-      // axios register
-    }
-
-    if (variant === "LOGIN") {
-      // nextAuth signin
+    try {
+      if (variant === "REGISTER") {
+        // Example API call for registration
+        await axios.post("/api/register", data);
+      } else {
+        // Example API call for login
+        // await axios.post("/api/login", data);
+      }
+    } catch (error) {
+      console.error("Error during authentication:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const socialAction = (action: string) => {
-    setIsLoading(true);
+    console.log(`${action} login action`);
+    // Implement social login functionality here
   };
 
   return (
@@ -56,49 +58,48 @@ const AuthForm = () => {
           {variant === "REGISTER" && (
             <Input
               id="name"
-              label="Name "
+              label="Name"
               register={register}
               errors={errors}
               disabled={isLoading}
+              required
             />
           )}
           <Input
             id="email"
-            label="Email address "
+            label="Email address"
+            type="email"
             register={register}
             errors={errors}
             disabled={isLoading}
+            required
           />
           <Input
             id="password"
             label="Password"
+            type="password"
             register={register}
             errors={errors}
             disabled={isLoading}
+            required
+            showPasswordToggle
           />
-          <div>
-            <Button disabled={isLoading} fullWidth type="submit">
-              {variant === "LOGIN" ? "Sign in" : "Register"}
-            </Button>
-          </div>
+          <Button disabled={isLoading} fullWidth type="submit">
+            {variant === "LOGIN" ? "Sign In" : "Register"}
+          </Button>
         </form>
-
         <div className="mt-6">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
+              <div className="w-full border-t border-gray-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span
-                className="bg-white px-2 text-gray-500"
-                style={{
-                  fontFamily: "Roboto Condensed",
-                }}>
+              <span className="px-2 bg-white text-gray-500">
                 Or continue with
               </span>
             </div>
           </div>
-          <div className="mt-6 flex gap-2">
+          <div className="mt-6 grid grid-cols-2 gap-3">
             <AuthSocialButton
               icon={BsGithub}
               onClick={() => socialAction("github")}
@@ -109,25 +110,14 @@ const AuthForm = () => {
             />
           </div>
         </div>
-
-        <div
-          className="flex gap-2 justify-center text-sm mt-6 px-2 text-gray-500"
-          style={{
-            fontFamily: "Roboto Condensed",
-          }}>
-          <div>
-            {variant === "LOGIN"
-              ? "New to FlashChat?"
-              : " Already have an account"}
-          </div>
-          <div
+        <div className="mt-6 flex justify-center text-sm text-gray-500">
+          <span
             onClick={toggleVariant}
-            className="underline cursor-pointer"
-            style={{
-              fontFamily: "Roboto Condensed",
-            }}>
-            {variant === "LOGIN" ? "Create an account" : " Login"}
-          </div>
+            className="font-medium text-orange-600 hover:text-orange-500 cursor-pointer">
+            {variant === "LOGIN"
+              ? "Need an account? Register"
+              : "Have an account? Sign In"}
+          </span>
         </div>
       </div>
     </div>
