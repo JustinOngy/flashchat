@@ -1,20 +1,37 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
-import Button from "@/app/components/Button";
-import Input from "@/app/components/inputs/Input";
-import { useForm, SubmitHandler, FieldValues } from "react-hook-form";
-import AuthSocialButton from "./AuthSocialButton";
-import { BsGithub, BsGoogle } from "react-icons/bs";
 import axios from "axios";
+import { signIn, useSession } from "next-auth/react";
+import { useCallback, useEffect, useState } from "react";
+import { BsGithub, BsGoogle } from "react-icons/bs";
+import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
+// import { useRouter } from "next/navigation";
+
+import Input from "@/app/components/inputs/Input";
+import AuthSocialButton from "./AuthSocialButton";
+import Button from "@/app/components/Button";
+import { toast } from "react-hot-toast";
 
 type Variant = "LOGIN" | "REGISTER";
 
-const AuthForm: React.FC = () => {
+const AuthForm = () => {
+  // const session = useSession();
+  // const router = useRouter();
   const [variant, setVariant] = useState<Variant>("LOGIN");
   const [isLoading, setIsLoading] = useState(false);
+
+  // useEffect(() => {
+  //   if (session?.status === "authenticated") {
+  //     router.push("/conversations");
+  //   }
+  // }, [session?.status, router]);
+
   const toggleVariant = useCallback(() => {
-    setVariant(variant === "LOGIN" ? "REGISTER" : "LOGIN");
+    if (variant === "LOGIN") {
+      setVariant("REGISTER");
+    } else {
+      setVariant("LOGIN");
+    }
   }, [variant]);
 
   const {
@@ -29,77 +46,132 @@ const AuthForm: React.FC = () => {
     },
   });
 
-  const onSubmit: SubmitHandler<FieldValues> = async (data) => {
+  const onSubmit: SubmitHandler<FieldValues> = (data) => {
     setIsLoading(true);
-    try {
-      if (variant === "REGISTER") {
-        // Example API call for registration
-        await axios.post("/api/register", data);
-      } else {
-        // Example API call for login
-        // await axios.post("/api/login", data);
-      }
-    } catch (error) {
-      console.error("Error during authentication:", error);
-    } finally {
-      setIsLoading(false);
+
+    if (variant === "REGISTER") {
+      axios
+        .post("/api/register", data)
+        .then(() =>
+          signIn("credentials", {
+            ...data,
+            redirect: false,
+          })
+        )
+        .then((callback) => {
+          if (callback?.error) {
+            toast.error("Invalid credentials!");
+          }
+
+          if (callback?.ok) {
+            // router.push("/conversations");
+          }
+        })
+        .catch(() => toast.error("Something went wrong!"))
+        .finally(() => setIsLoading(false));
+    }
+
+    if (variant === "LOGIN") {
+      signIn("credentials", {
+        ...data,
+        redirect: false,
+      })
+        .then((callback) => {
+          if (callback?.error) {
+            toast.error("Invalid credentials!");
+          }
+
+          if (callback?.ok) {
+            // router.push("/conversations");
+          }
+        })
+        .finally(() => setIsLoading(false));
     }
   };
 
   const socialAction = (action: string) => {
-    console.log(`${action} login action`);
-    // Implement social login functionality here
+    setIsLoading(true);
+
+    signIn(action, { redirect: false })
+      .then((callback) => {
+        if (callback?.error) {
+          toast.error("Invalid credentials!");
+        }
+
+        if (callback?.ok) {
+          toast.success("Logged In!");
+        }
+      })
+      .finally(() => setIsLoading(false));
   };
 
   return (
     <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-      <div className="bg-white px-4 py-8 shadow sm:rounded-lg sm:px-10">
+      <div
+        className="
+        bg-white
+          px-4
+          py-8
+          shadow
+          sm:rounded-lg
+          sm:px-10
+        ">
         <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
           {variant === "REGISTER" && (
             <Input
-              id="name"
-              label="Name"
+              disabled={isLoading}
               register={register}
               errors={errors}
-              disabled={isLoading}
               required
+              id="name"
+              label="Name"
             />
           )}
           <Input
+            disabled={isLoading}
+            register={register}
+            errors={errors}
+            required
             id="email"
             label="Email address"
             type="email"
-            register={register}
-            errors={errors}
-            disabled={isLoading}
-            required
           />
           <Input
+            disabled={isLoading}
+            register={register}
+            errors={errors}
+            required
             id="password"
             label="Password"
             type="password"
-            register={register}
-            errors={errors}
-            disabled={isLoading}
-            required
             showPasswordToggle
           />
-          <Button disabled={isLoading} fullWidth type="submit">
-            {variant === "LOGIN" ? "Sign In" : "Register"}
-          </Button>
+          <div>
+            <Button disabled={isLoading} fullWidth type="submit">
+              {variant === "LOGIN" ? "Sign in" : "Register"}
+            </Button>
+          </div>
         </form>
+
         <div className="mt-6">
           <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
+            <div
+              className="
+                absolute 
+                inset-0 
+                flex 
+                items-center
+              ">
+              <div className="w-full border-t border-gray-300" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">
+              <span className="bg-white px-2 text-gray-500">
                 Or continue with
               </span>
             </div>
           </div>
-          <div className="mt-6 grid grid-cols-2 gap-3">
+
+          <div className="mt-6 flex gap-2">
             <AuthSocialButton
               icon={BsGithub}
               onClick={() => socialAction("github")}
@@ -110,14 +182,24 @@ const AuthForm: React.FC = () => {
             />
           </div>
         </div>
-        <div className="mt-6 flex justify-center text-sm text-gray-500">
-          <span
-            onClick={toggleVariant}
-            className="font-medium text-orange-600 hover:text-orange-500 cursor-pointer">
+        <div
+          className="
+            flex 
+            gap-2 
+            justify-center 
+            text-sm 
+            mt-6 
+            px-2 
+            text-gray-500
+          ">
+          <div>
             {variant === "LOGIN"
-              ? "Need an account? Register"
-              : "Have an account? Sign In"}
-          </span>
+              ? "New to FlashChat?"
+              : "Already have an account?"}
+          </div>
+          <div onClick={toggleVariant} className="underline cursor-pointer">
+            {variant === "LOGIN" ? "Create an account" : "Login"}
+          </div>
         </div>
       </div>
     </div>
